@@ -34,3 +34,38 @@ occurs' x (Node l y r) = case compare x y of
                           EQ -> True
                           LT -> occurs' x l
                           GT -> occurs' x r
+
+-- 3
+num_leaves :: Tree a -> Int
+num_leaves (Leaf a)   = 1
+num_leaves (Node l _ r) = num_leaves l + num_leaves r
+
+balanced :: Tree a -> Bool
+balanced (Leaf a)   = True
+balanced (Node l _ r) = abs ((num_leaves l) - (num_leaves r)) <= 1
+
+-- 4
+data Tree' a = Leaf' a | Node' (Tree' a) (Tree' a) deriving (Show)
+halve :: [a] -> ([a], [a])
+halve xs = (take half_length xs, drop half_length xs) where
+            half_length = length xs `div` 2
+
+balance :: [a] -> Tree' a
+balance [x] = Leaf' x
+balance xs = Node' (balance half1) (balance half2) where
+             (half1, half2) = halve xs
+
+-- 5
+data Expr = Val Int | Add Expr Expr deriving (Show)
+folde :: (Int -> a) -> (a -> a -> a) -> Expr -> a
+folde f _ (Val i)   = f i
+folde f g (Add l r) = g (folde f g l) (folde f g r)
+
+-- 6
+-- let expr = Add (Add (Val 1) (Val 4)) (Add (Val 3) (Val 5))
+eval :: Expr -> Int
+eval expr = folde id (+) expr
+
+size :: Expr -> Int
+size (Val _) = 1
+size (Add l r) = (size l) + (size r)
