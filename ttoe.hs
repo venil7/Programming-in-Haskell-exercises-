@@ -3,7 +3,7 @@ import Data.List.Split
 
 data Player = X | O
 showPlayer :: Player -> String
-showPlayer X = "×"
+showPlayer X = "☓"
 showPlayer O = "○"
 instance Show Player where
   show p = showPlayer p
@@ -24,13 +24,15 @@ instance Eq Cell where
   _             == _             = False
 
 type Field = [Cell]
+type Eval = (Int, Maybe Int)
+type State = (Maybe Player, [Int])
 
 new_field :: Int -> Field
 new_field side | side > 0 = [Empty | _ <- [1..side^2]]
                | otherwise = error "can't use negative side size"
 
-make_move :: Player -> Int -> Field -> Field
-make_move player n field | (n >= length field) = error "can't set field beyond index"
+make_move :: Player -> Field -> Int -> Field
+make_move player field n | (n >= length field) = error "can't set field beyond index"
                          | ((field !! n) /= Empty) = error "can't set field already occupied"
                          | otherwise = take n field ++ [(Occupied player)] ++ drop (n + 1) field
 
@@ -60,4 +62,22 @@ has_winner field | winner X field = Just X
                  | winner O field = Just O
                  | otherwise = Nothing
 
--- main = winning_combinations (new_field 3)
+possible_moves :: Field -> [Int]
+possible_moves field = [i | (c,i) <- zip field [0..], c == Empty]
+
+board_state :: Field -> State
+board_state field = (has_winner field, possible_moves field)
+
+opposite :: Player -> Player
+opposite X = O
+opposite O = X
+
+minimax :: Field -> Player -> Int -> Eval
+minimax field player depth = case board_state field of
+  (Nothing, [])    -> (depth - 10, Nothing)
+  (Just O, _)      -> (depth - 10, Nothing)
+  (Just X, _)      -> (10 - depth, Nothing)
+  (Nothing, moves) -> pick $ sort [(fst $ minimax (make_next_move n) opposite_player (depth + 1), Just n) | n <- moves] where
+    pick = if player == O then head else last
+    opposite_player = opposite player
+    make_next_move = make_move player field

@@ -69,3 +69,14 @@ eval expr = folde id (+) expr
 size :: Expr -> Int
 size (Val _) = 1
 size (Add l r) = (size l) + (size r)
+
+-- 7
+instance Eq a => Eq (Maybe a) where
+  (Just x) == (Just y) = x == y
+  _        == _        = False
+
+instance Eq a => Eq [a] where
+  []     == []     = False
+  _      == ys     = False
+  xs     == _      = False
+  (x:xs) == (y:ys) = xs == ys
