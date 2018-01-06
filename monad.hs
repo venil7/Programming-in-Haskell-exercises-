@@ -76,9 +76,6 @@ is op = satisfies (==op)
 begin :: Parser Operator
 begin = is Begin
 
-optionalBegin :: Parser Operator
-optionalBegin = begin <|> pure Noop
-
 end :: Parser Operator
 end = is End
 
@@ -86,18 +83,20 @@ nonControlOperator :: Parser Operator
 nonControlOperator = satisfies (\op -> elem op [Main.Left,Main.Right,Inc,Dec,Input,Output,Noop])
 
 block :: Parser Block
-block = do ops <- many nonControlOperator
-          --  end' <- optionalEnd
-           begin' <- optionalBegin
-           case begin' of
-             End -> empty
-             Begin -> do ops' <- block
-                         end' <- end
-                         rest <- many nonControlOperator
-                         return (ops ++ [begin'] ++ ops' ++ [end'] ++ rest)
-             Noop -> return ops
+block = do b      <- begin
+           ops    <- many nonControlOperator
+           blocks'<- many block
+           ops'   <- many nonControlOperator
+           e      <- end
+           return ([b] ++ ops ++ (concat blocks') ++ ops' ++ [e])
+
+code :: Parser Block
+code = do ops     <- many nonControlOperator
+          blocks' <- many block
+          ops'    <- many nonControlOperator
+          return (ops ++ (concat blocks') ++ ops')
 
 program :: Parser Block
-program = do block1 <- block
-             block2 <- block
-             return (block1 ++ block2)
+program = do c1 <- code
+             c2 <- code
+             return (c1 ++ c2)
