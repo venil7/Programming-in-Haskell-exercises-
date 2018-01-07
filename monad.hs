@@ -91,12 +91,8 @@ block = do b      <- begin
            return ([b] ++ ops ++ (concat blocks') ++ ops' ++ [e])
 
 code :: Parser Block
-code = do ops     <- many nonControlOperator
-          blocks' <- many block
-          ops'    <- many nonControlOperator
-          return (ops ++ (concat blocks') ++ ops')
+code = block <|> (some nonControlOperator)
 
 program :: Parser Block
-program = do c1 <- code
-             c2 <- code
-             return (c1 ++ c2)
+program = do x <- some code
+             return (concat x)
